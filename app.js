@@ -1,27 +1,20 @@
 const SUPABASE_URL = 'https://sesrmzxwpgxobfrmuaix.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_JWQLt7yJm0bw406beocZAQ_-t28acp3';
 
-// --- PURIFICADOR DE VOZ INDUSTRIAL ---
+// --- PURIFICADOR DE VOZ INDUSTRIAL (NIVEL EXTREMO) ---
 function limpiarTextoVoz(textoBruto) {
     let texto = textoBruto.toUpperCase();
     
-    // Matriz de corrección: aplasta palabras inútiles y pone el símbolo real
+    // 1. Purgar la basura humana (preposiciones y muletillas)
+    const basura = /\b(EL|LA|DE|DEL|LETRA|NÚMERO|NUMERO|LOTE|RAYA|ESPACIO)\b/g;
+    texto = texto.replace(basura, '');
+
+    // 2. Matriz de conversión fonética de trinchera
     const correcciones = {
-        "ELE": "L",
-        "GUION": "-",
-        "GUIÓN": "-",
-        "BARRA": "/",
-        "PUNTO": ".",
-        "CERO": "0",
-        "UNO": "1",
-        "DOS": "2",
-        "TRES": "3",
-        "CUATRO": "4",
-        "CINCO": "5",
-        "SEIS": "6",
-        "SIETE": "7",
-        "OCHO": "8",
-        "NUEVE": "9"
+        "ÉLE": "L", "ELE": "L", "GUION": "-", "GUIÓN": "-", "MENOS": "-",
+        "BARRA": "/", "PARTIDO": "/", "PUNTO": ".", "CERO": "0", "UNO": "1",
+        "DOS": "2", "TRES": "3", "CUATRO": "4", "CINCO": "5", "SEIS": "6",
+        "SIETE": "7", "OCHO": "8", "NUEVE": "9"
     };
 
     for (const [palabra, simbolo] of Object.entries(correcciones)) {
@@ -29,23 +22,31 @@ function limpiarTextoVoz(textoBruto) {
         texto = texto.replace(exp, simbolo);
     }
 
-    // Aniquilamos espacios y puntos finales residuales
-    return texto.replace(/\s/g, '').replace(/\.$/, '');
+    // 3. Aniquilación total: fulminamos espacios y cualquier símbolo no autorizado
+    texto = texto.replace(/\s+/g, '');
+    texto = texto.replace(/[^A-Z0-9\-\/\.]/g, '');
+
+    return texto;
 }
 
 function dictarLote(idCampo) {
     const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Reconocimiento) { alert("Navegador no compatible con voz."); return; }
+    if (!Reconocimiento) { alert("Tu navegador es sordo. Cambia de dispositivo."); return; }
     
     const reco = new Reconocimiento();
     reco.lang = 'es-ES';
     
     reco.onstart = () => { document.getElementById(idCampo).style.backgroundColor = "#fff3cd"; };
+    
     reco.onresult = (e) => {
         let escuchado = e.results[0][0].transcript;
         document.getElementById(idCampo).value = limpiarTextoVoz(escuchado);
     };
+    
+    // Si la máquina no oye nada, marcamos en rojo levemente para avisar
+    reco.onerror = () => { document.getElementById(idCampo).style.backgroundColor = "#ffcccc"; };
     reco.onend = () => { document.getElementById(idCampo).style.backgroundColor = "#fff"; };
+    
     reco.start();
 }
 
@@ -58,7 +59,8 @@ const camposAtrasar = [
 function guardarMemoria() {
     camposAtrasar.forEach(id => {
         const valor = document.getElementById(id).value;
-        localStorage.setItem(id, valor);
+        // Solo guardamos si hay algo escrito, para no borrar por accidente con vacíos
+        if(valor) localStorage.setItem(id, valor);
     });
 }
 
@@ -77,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formTraza = document.getElementById('formulario-trazabilidad');
     const btnImprimir = document.getElementById('btn-imprimir-traza');
 
-    // Recuperamos lo que Paqui escribió ayer
+    // Recuperamos lo que Paqui escribió en el turno anterior
     cargarMemoria();
 
     setInterval(() => { reloj.textContent = new Date().toLocaleTimeString('es-ES'); }, 1000);
@@ -91,19 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
             temperatura: parseFloat(document.getElementById('temperatura').value),
             firma: "Paqui"
         };
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene`, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-        if (res.ok) { alert('✅ Higiene guardada.'); formHigiene.reset(); }
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+            if (res.ok) { 
+                alert('✅ Plan de Higiene sellado en la base de datos.'); 
+                formHigiene.reset(); 
+            } else throw new Error("Fallo en la red.");
+        } catch (err) { alert('❌ Error: El parte de higiene no ha llegado al servidor.'); }
     });
 
-    // MÓDULO 2: TRAZABILIDAD (Con Memoria de Elefante)
+    // MÓDULO 2: TRAZABILIDAD (Memoria + Purificador)
     formTraza.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Antes de enviar, memorizamos los lotes persistentes
+        // Blindamos los datos fijos antes de disparar
         guardarMemoria();
 
         const datos = {
@@ -120,19 +127,21 @@ document.addEventListener('DOMContentLoaded', () => {
             firma: "Paqui"
         };
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad`, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
 
-        if (res.ok) { 
-            alert('✅ Lote sellado y memoria actualizada.'); 
-            // Limpiamos solo lo que cambia cada vez (tomate, litros y salida)
-            document.getElementById('lote-tomate').value = '';
-            document.getElementById('litros-prod').value = '';
-            document.getElementById('lote-salida').value = '';
-        }
+            if (res.ok) { 
+                alert('✅ Lote asegurado. Producción registrada.'); 
+                // Limpiamos estrictamente lo que caduca a diario
+                document.getElementById('lote-tomate').value = '';
+                document.getElementById('litros-prod').value = '';
+                document.getElementById('lote-salida').value = '';
+            } else throw new Error("Fallo en la red.");
+        } catch (err) { alert('❌ Error: El lote se ha perdido por falta de conexión.'); }
     });
 
     // MÓDULO 3: PDF UNIFICADO CRUZADO
@@ -143,6 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(`${SUPABASE_URL}/rest/v1/registro_higiene?select=*&order=fecha_hora.asc`, { headers: { 'apikey': SUPABASE_ANON_KEY }}),
                 fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad?select=*&order=fecha_hora.asc`, { headers: { 'apikey': SUPABASE_ANON_KEY }})
             ]);
+            
+            if (!resH.ok || !resT.ok) throw new Error("Archivos denegados por Supabase.");
+
             const higiene = await resH.json();
             const traza = await resT.json();
             const mapaHigiene = {};
@@ -167,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headStyles: { fillColor: [230, 230, 230], textColor: [0,0,0] }
             });
             doc.save('Informe_Unificado_El_Hortelano.pdf');
-        } catch (err) { alert('Error en el informe.'); }
+        } catch (err) { alert('❌ Error crítico al cruzar los datos. Revisa la red.'); }
         finally { btnImprimir.textContent = "🖨️ IMPRIMIR REGISTRO PDF"; }
     });
 });
