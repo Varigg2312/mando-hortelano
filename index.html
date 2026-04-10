@@ -17,13 +17,8 @@
             <p id="reloj">--:--:--</p>
         </header>
 
-        <div class="panel-graficas">
-            <div class="grafica-contenedor">
-                <canvas id="grafica-temperatura"></canvas>
-            </div>
-            <div class="grafica-contenedor">
-                <canvas id="grafica-cloro"></canvas>
-            </div>
+        <div class="panel-grafica">
+            <canvas id="grafica-temperatura" height="100"></canvas>
         </div>
 
         <form id="formulario-higiene">
@@ -66,7 +61,7 @@
                 <div class="grupo-control-voz"><label for="lote-salida">Lote Venta/Salida:</label><div class="input-voz"><input type="text" id="lote-salida" required><button type="button" class="btn-micro" onclick="dictarLote('lote-salida')">🎤</button></div></div>
 
                 <div class="grupo-firma" style="margin-top: 20px;">
-                    <label>Firma Biométrica del Responsable:</label>
+                    <label>Firma Biométrica del Responsable (Obligatoria):</label>
                     <canvas id="lienzo-firma" width="300" height="150"></canvas>
                     <button type="button" id="btn-limpiar-firma">Limpiar Cristal</button>
                 </div>
@@ -76,7 +71,7 @@
         </form>
 
         <hr style="margin: 30px 0; border: 1px solid #bdc3c7;">
-        <button type="button" id="btn-imprimir-traza" class="btn-inmenso" style="background-color: #8e44ad;">🖨️ IMPRIMIR REGISTRO PDF</button>
+        <button type="button" id="btn-imprimir-traza" class="btn-inmenso" style="background-color: #8e44ad;">🖨️ IMPRIMIR INFORME DE FIRMAS (PDF)</button>
     </div>
     <script src="app.js"></script>
 </body>
