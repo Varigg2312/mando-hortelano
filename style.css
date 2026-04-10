@@ -1,17 +1,135 @@
-:root { --verde: #27ae60; --rojo: #c0392b; --gris-fondo: #f4f4f9; --texto: #2c3e50; }
-body { font-family: sans-serif; background: var(--gris-fondo); display: flex; justify-content: center; padding: 20px; }
-.contenedor-principal { width: 100%; max-width: 700px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-header { text-align: center; border-bottom: 2px solid var(--texto); margin-bottom: 20px; }
-fieldset { border: 2px solid #bdc3c7; border-radius: 8px; margin-bottom: 20px; padding: 15px; }
-label { display: block; font-weight: bold; margin-bottom: 5px; }
-input { width: 100%; padding: 12px; border: 2px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-size: 1.1rem; }
-.botones-binarios { display: flex; gap: 10px; }
-.botones-binarios label { flex: 1; padding: 15px; text-align: center; background: #eee; border-radius: 6px; cursor: pointer; }
+:root { 
+    --verde: #27ae60; 
+    --rojo: #c0392b; 
+    --gris-fondo: #f4f4f9; 
+    --texto: #2c3e50; 
+}
+
+body { 
+    font-family: sans-serif; 
+    background: var(--gris-fondo); 
+    display: flex; 
+    justify-content: center; 
+    padding: 20px; 
+}
+
+.contenedor-principal { 
+    width: 100%; 
+    max-width: 700px; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+}
+
+header { 
+    text-align: center; 
+    border-bottom: 2px solid var(--texto); 
+    margin-bottom: 20px; 
+}
+
+fieldset { 
+    border: 2px solid #bdc3c7; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    padding: 15px; 
+}
+
+label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 5px; 
+}
+
+input { 
+    width: 100%; 
+    padding: 12px; 
+    border: 2px solid #bdc3c7; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    font-size: 1.1rem; 
+}
+
+.botones-binarios { 
+    display: flex; 
+    gap: 10px; 
+}
+
+.botones-binarios label { 
+    flex: 1; 
+    padding: 15px; 
+    text-align: center; 
+    background: #eee; 
+    border-radius: 6px; 
+    cursor: pointer; 
+}
+
 input[type="radio"]:checked + .btn-verde { background: var(--verde); color: white; }
 input[type="radio"]:checked + .btn-rojo { background: var(--rojo); color: white; }
 input[type="radio"] { display: none; }
-.btn-inmenso { width: 100%; padding: 20px; font-size: 1.2rem; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; color: white; background: var(--texto); }
-/* Estilos Voz */
-.input-voz { display: flex; gap: 10px; align-items: center; }
-.btn-micro { padding: 10px 15px; font-size: 1.5rem; background: #f1f1f1; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
+
+.btn-inmenso { 
+    width: 100%; 
+    padding: 20px; 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    cursor: pointer; 
+    border: none; 
+    border-radius: 8px; 
+    color: white; 
+    background: var(--texto); 
+}
+
+.input-voz { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
+
+.btn-micro { 
+    padding: 10px 15px; 
+    font-size: 1.5rem; 
+    background: #f1f1f1; 
+    border: 1px solid #ccc; 
+    border-radius: 8px; 
+    cursor: pointer; 
+}
+
 .btn-micro:active { background: #e67e22; }
+
+/* Estilos para la Gráfica y la Firma Táctil */
+.panel-grafica {
+    background: #fff;
+    padding: 10px;
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.grupo-firma {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ecf0f1;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+#lienzo-firma {
+    border: 2px solid #2c3e50;
+    background: #fff;
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+    margin: 10px 0;
+}
+
+#btn-limpiar-firma {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
