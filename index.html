@@ -11,6 +11,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <div id="pantalla-login" class="login-overlay">
+        <div class="login-caja">
+            <h2>Acceso Restringido</h2>
+            <p>El Hortelano - Mando Central</p>
+            <input type="email" id="login-email" placeholder="Correo oficial" required>
+            <input type="password" id="login-pass" placeholder="Contraseña" required>
+            <button id="btn-login" class="btn-inmenso" style="background-color: #c0392b;">DESBLOQUEAR SISTEMA</button>
+            <p id="login-error" style="color: red; display: none; margin-top: 10px;">Credenciales denegadas.</p>
+        </div>
+    </div>
+
     <div class="contenedor-principal">
         <header>
             <h1>Mando Central - El Hortelano</h1>
@@ -56,7 +67,7 @@
                 
                 <div class="grupo-control-voz"><label for="lote-tomate">Lote Tomates:</label><div class="input-voz"><input type="text" id="lote-tomate" required><button type="button" class="btn-micro" onclick="dictarLote('lote-tomate')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-vinagre">Lote Vinagre:</label><div class="input-voz"><input type="text" id="lote-vinagre" required><button type="button" class="btn-micro" onclick="dictarLote('lote-vinagre')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-sal">Lote Sal:</label><div class="input-voz"><input type="text" id="lote-sal" required><button type="button" class="btn-micro" onclick="dictarLote('lote-sal')">🎤</button></div></div>
+                <div class="grupo-control-voz"><label for="lote-sal">Lote Sal:</label><div class="input-voz"><input type="text" id="lote-sal" required><button type="button" class="button" class="btn-micro" onclick="dictarLote('lote-sal')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-ajo">Lote Ajo:</label><div class="input-voz"><input type="text" id="lote-ajo" required><button type="button" class="btn-micro" onclick="dictarLote('lote-ajo')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-aceite">Lote Aceite:</label><div class="input-voz"><input type="text" id="lote-aceite" required><button type="button" class="btn-micro" onclick="dictarLote('lote-aceite')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-limon">Lote Limón:</label><div class="input-voz"><input type="text" id="lote-limon" required><button type="button" class="btn-micro" onclick="dictarLote('lote-limon')">🎤</button></div></div>
