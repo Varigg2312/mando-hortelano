@@ -1,6 +1,6 @@
 const SUPABASE_URL = 'https://sesrmzxwpgxobfrmuaix.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_JWQLt7yJm0bw406beocZAQ_-t28acp3';
-let tokenSeguridad = null; // La llave privada que abre la bóveda
+let tokenSeguridad = null; 
 
 // --- 0. EL CADENERO DE LA PUERTA (BÓVEDA DE TITANIO) ---
 document.getElementById('btn-login').addEventListener('click', async () => {
@@ -20,14 +20,19 @@ document.getElementById('btn-login').addEventListener('click', async () => {
         });
 
         const data = await res.json();
+        
         if (res.ok && data.access_token) {
-            tokenSeguridad = data.access_token; // Robamos la llave
-            document.getElementById('pantalla-login').style.display = 'none'; // Tiramos el muro
-            iniciarMaquinaria(); // Despertamos a la bestia
+            tokenSeguridad = data.access_token; 
+            document.getElementById('pantalla-login').style.display = 'none'; 
+            iniciarMaquinaria(); 
         } else {
-            throw new Error("Credenciales inválidas");
+            // Extraemos el veneno exacto que escupe Supabase
+            const motivo = data.error_description || data.msg || "Credenciales inválidas";
+            throw new Error(motivo);
         }
     } catch (err) {
+        console.error("Fallo de acceso:", err);
+        errorMsg.textContent = "ERROR: " + err.message;
         errorMsg.style.display = 'block';
         btn.textContent = "DESBLOQUEAR SISTEMA";
     }
@@ -44,10 +49,9 @@ function iniciarMaquinaria() {
         return texto.replace(/\s+/g, '').replace(/[^A-Z0-9\-\/\.]/g, '');
     }
 
-    // Exponemos el micrófono al cristal exterior
     window.dictarLote = function(idField) {
         const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!Reconocimiento) return alert("Tu navegador es sordo.");
+        if (!Reconocimiento) return alert("Navegador no compatible con voz.");
         const reco = new Reconocimiento(); reco.lang = 'es-ES';
         reco.onstart = () => { document.getElementById(idField).style.backgroundColor = "#fff3cd"; };
         reco.onresult = (e) => { document.getElementById(idField).value = limpiarTextoVoz(e.results[0][0].transcript); };
@@ -83,11 +87,14 @@ function iniciarMaquinaria() {
     function guardarMemoria() { camposAtrasar.forEach(id => { if(document.getElementById(id).value) localStorage.setItem(id, document.getElementById(id).value); }); }
     function cargarMemoria() { camposAtrasar.forEach(id => { if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id); }); }
 
-    // --- 4. MOTOR PRINCIPAL CON INYECCIÓN DE LLAVES ---
+    // --- 4. MOTOR PRINCIPAL ---
     cargarMemoria();
     setInterval(() => { document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-ES'); }, 1000);
 
-    // DOBLE GRÁFICA (FRÍO Y CLORO) BLINDADA
+    // DOBLE GRÁFICA (FRÍO Y CLORO)
+    let chartTemp = null;
+    let chartCloro = null;
+
     async function cargarGraficas() {
         try {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene?select=fecha_hora,temperatura,cloro&order=fecha_hora.desc&limit=15`, { 
@@ -96,16 +103,20 @@ function iniciarMaquinaria() {
             const datosHigiene = await res.json(); datosHigiene.reverse();
             const etiquetasFechas = datosHigiene.map(d => new Date(d.fecha_hora).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
 
+            // Destruimos gráficas antiguas si existen para evitar errores visuales
+            if (chartTemp) chartTemp.destroy();
+            if (chartCloro) chartCloro.destroy();
+
             const ctxTemp = document.getElementById('grafica-temperatura').getContext('2d');
-            new Chart(ctxTemp, { type: 'line', data: { labels: etiquetasFechas, datasets: [{ label: 'ºC Cámara', data: datosHigiene.map(d => d.temperatura), borderColor: '#2980b9', tension: 0.3, fill: false }] }, options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { suggestedMin: 0, suggestedMax: 10 } } } });
+            chartTemp = new Chart(ctxTemp, { type: 'line', data: { labels: etiquetasFechas, datasets: [{ label: 'ºC Cámara', data: datosHigiene.map(d => d.temperatura), borderColor: '#2980b9', tension: 0.3, fill: false }] }, options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { suggestedMin: 0, suggestedMax: 10 } } } });
 
             const ctxCloro = document.getElementById('grafica-cloro').getContext('2d');
-            new Chart(ctxCloro, { type: 'line', data: { labels: etiquetasFechas, datasets: [{ label: 'Cloro (mg/L)', data: datosHigiene.map(d => d.cloro), borderColor: '#27ae60', tension: 0.3, fill: false }] }, options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { suggestedMin: 0, suggestedMax: 3 } } } });
-        } catch(e) { console.log("Muro de seguridad activo o datos vacíos."); }
+            chartCloro = new Chart(ctxCloro, { type: 'line', data: { labels: etiquetasFechas, datasets: [{ label: 'Cloro (mg/L)', data: datosHigiene.map(d => d.cloro), borderColor: '#27ae60', tension: 0.3, fill: false }] }, options: { responsive: true, plugins: { legend: { display: true } }, scales: { y: { suggestedMin: 0, suggestedMax: 3 } } } });
+        } catch(e) { console.log("Error cargando visuales protegidos."); }
     }
     cargarGraficas();
 
-    // HIGIENE BLINDADA
+    // HIGIENE (CORREGIDO: Sin recarga de página suicida)
     document.getElementById('formulario-higiene').addEventListener('submit', async (e) => {
         e.preventDefault();
         const d = { cloro: parseFloat(document.getElementById('cloro').value), organoleptico: document.querySelector('input[name="organoleptico"]:checked').value, temperatura: parseFloat(document.getElementById('temperatura').value), firma: "Manual" };
@@ -116,14 +127,17 @@ function iniciarMaquinaria() {
             body: JSON.stringify(d) 
         });
         
-        if (r.ok) { alert('✅ Higiene sellada.'); document.getElementById('formulario-higiene').reset(); location.reload(); }
-        else { alert('❌ Acceso denegado por el servidor.'); }
+        if (r.ok) { 
+            alert('✅ Higiene sellada.'); 
+            document.getElementById('formulario-higiene').reset(); 
+            cargarGraficas(); // Actualizamos las gráficas sin pestañear
+        } else { alert('❌ Error: El servidor ha rechazado los datos.'); }
     });
 
-    // TRAZABILIDAD BLINDADA
+    // TRAZABILIDAD
     document.getElementById('formulario-trazabilidad').addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!lienzoEstaDibujado) { alert('❌ Operación cancelada. El responsable DEBE FIRMAR en el cristal táctil para sellar el lote.'); return; }
+        if (!lienzoEstaDibujado) { alert('❌ Operación cancelada. El responsable DEBE FIRMAR.'); return; }
         
         guardarMemoria();
         const firmaBase64 = canvas.toDataURL('image/png'); 
@@ -142,32 +156,30 @@ function iniciarMaquinaria() {
         });
         
         if (r.ok) { 
-            alert('✅ Lote sellado y firma biométrica guardada en la cámara acorazada.'); 
-            document.getElementById('lote-tomate').value = ''; document.getElementById('litros-prod').value = ''; document.getElementById('lote-salida').value = ''; 
-            ctx.clearRect(0,0,canvas.width,canvas.height); lienzoEstaDibujado = false; 
-        } else {
-            alert('❌ Acceso denegado por el servidor.');
-        }
+            alert('✅ Lote sellado y firma guardada.'); 
+            document.getElementById('lote-tomate').value = ''; 
+            document.getElementById('litros-prod').value = ''; 
+            document.getElementById('lote-salida').value = ''; 
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            lienzoEstaDibujado = false; 
+        } else { alert('❌ Acceso denegado.'); }
     });
 
-    // PDF FORENSE BLINDADO
+    // PDF FORENSE
     const btnImprimir = document.getElementById('btn-imprimir-traza');
     btnImprimir.addEventListener('click', async () => {
-        btnImprimir.textContent = "⏳ CRUZANDO DATOS...";
+        btnImprimir.textContent = "⏳ GENERANDO...";
         try {
             const [resH, resT] = await Promise.all([
                 fetch(`${SUPABASE_URL}/rest/v1/registro_higiene?select=*&order=fecha_hora.asc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tokenSeguridad}` }}),
                 fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad?select=*&order=fecha_hora.asc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${tokenSeguridad}` }})
             ]);
             
-            if (!resH.ok || !resT.ok) throw new Error("Credenciales inválidas para el reporte.");
-            
             const higiene = await resH.json(); const traza = await resT.json();
             const mapaHigiene = {}; higiene.forEach(h => { mapaHigiene[new Date(h.fecha_hora).toLocaleDateString('es-ES')] = h; });
 
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
-            doc.setFontSize(14); doc.text("REGISTRO UNIFICADO - EL HORTELANO (VERIFICADO)", 14, 15);
-            doc.setFontSize(10); doc.text("Informe de Firmas Biométricas de Producción", 14, 21);
+            doc.setFontSize(14); doc.text("REGISTRO UNIFICADO - EL HORTELANO", 14, 15);
 
             const filas = traza.map(t => {
                 const f = new Date(t.fecha_hora).toLocaleDateString('es-ES'); const h = mapaHigiene[f] || {};
@@ -175,7 +187,7 @@ function iniciarMaquinaria() {
             });
 
             doc.autoTable({
-                startY: 28, head: [['Fecha', 'Cloro', 'ºC', 'Org.', 'Tom.', 'Vin.', 'Sal', 'Ajo', 'Ace.', 'Lim.', 'Pim.', 'Env.', 'Lit.', 'Sal.', 'Firma Biométrica']], body: filas, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [230, 230, 230], textColor: [0,0,0] },
+                startY: 28, head: [['Fecha', 'Cloro', 'ºC', 'Org.', 'Tom.', 'Vin.', 'Sal', 'Ajo', 'Ace.', 'Lim.', 'Pim.', 'Env.', 'Lit.', 'Sal.', 'Firma']], body: filas, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [230, 230, 230], textColor: [0,0,0] },
                 didDrawCell: (datosCell) => {
                     if (datosCell.column.index === 14 && datosCell.section === 'body') {
                         const t = traza[datosCell.row.index];
@@ -183,8 +195,8 @@ function iniciarMaquinaria() {
                     }
                 }
             });
-            doc.save('Informe_Oficial_Firmado_El_Hortelano.pdf');
-        } catch (err) { alert('❌ Error crítico. Acceso denegado al servidor o red inestable.'); }
-        finally { btnImprimir.textContent = "🖨️ IMPRIMIR INFORME DE FIRMAS (PDF)"; }
+            doc.save('Informe_Firmado_El_Hortelano.pdf');
+        } catch (err) { alert('❌ Error en el reporte.'); }
+        finally { btnImprimir.textContent = "🖨️ IMPRIMIR REGISTRO PDF"; }
     });
 }
