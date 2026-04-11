@@ -18,7 +18,7 @@
             <input type="email" id="login-email" placeholder="Correo oficial" required>
             <input type="password" id="login-pass" placeholder="Contraseña" required>
             <button id="btn-login" class="btn-inmenso" style="background-color: #c0392b;">DESBLOQUEAR SISTEMA</button>
-            <p id="login-error" style="color: red; display: none; margin-top: 10px;">Credenciales denegadas.</p>
+            <p id="login-error" style="color: red; display: none; margin-top: 10px; font-weight: bold;"></p>
         </div>
     </div>
 
@@ -29,12 +29,8 @@
         </header>
 
         <div class="panel-graficas">
-            <div class="grafica-contenedor">
-                <canvas id="grafica-temperatura"></canvas>
-            </div>
-            <div class="grafica-contenedor">
-                <canvas id="grafica-cloro"></canvas>
-            </div>
+            <div class="grafica-contenedor"><canvas id="grafica-temperatura"></canvas></div>
+            <div class="grafica-contenedor"><canvas id="grafica-cloro"></canvas></div>
         </div>
 
         <form id="formulario-higiene">
@@ -64,10 +60,9 @@
         <form id="formulario-trazabilidad" style="margin-top: 40px;">
             <fieldset>
                 <legend>Trazabilidad Total (Dictado Activo)</legend>
-                
                 <div class="grupo-control-voz"><label for="lote-tomate">Lote Tomates:</label><div class="input-voz"><input type="text" id="lote-tomate" required><button type="button" class="btn-micro" onclick="dictarLote('lote-tomate')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-vinagre">Lote Vinagre:</label><div class="input-voz"><input type="text" id="lote-vinagre" required><button type="button" class="btn-micro" onclick="dictarLote('lote-vinagre')">🎤</button></div></div>
-                <div class="grupo-control-voz"><label for="lote-sal">Lote Sal:</label><div class="input-voz"><input type="text" id="lote-sal" required><button type="button" class="button" class="btn-micro" onclick="dictarLote('lote-sal')">🎤</button></div></div>
+                <div class="grupo-control-voz"><label for="lote-sal">Lote Sal:</label><div class="input-voz"><input type="text" id="lote-sal" required><button type="button" class="btn-micro" onclick="dictarLote('lote-sal')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-ajo">Lote Ajo:</label><div class="input-voz"><input type="text" id="lote-ajo" required><button type="button" class="btn-micro" onclick="dictarLote('lote-ajo')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-aceite">Lote Aceite:</label><div class="input-voz"><input type="text" id="lote-aceite" required><button type="button" class="btn-micro" onclick="dictarLote('lote-aceite')">🎤</button></div></div>
                 <div class="grupo-control-voz"><label for="lote-limon">Lote Limón:</label><div class="input-voz"><input type="text" id="lote-limon" required><button type="button" class="btn-micro" onclick="dictarLote('lote-limon')">🎤</button></div></div>
@@ -82,7 +77,6 @@
                     <button type="button" id="btn-limpiar-firma">Limpiar Cristal</button>
                 </div>
             </fieldset>
-
             <button type="submit" class="btn-inmenso" style="background-color: #2980b9;">SELLAR LOTE COMPLETO</button>
         </form>
 
