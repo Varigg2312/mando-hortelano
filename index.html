@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
+    <script src="db.js"></script>
     <script src="app.js" defer></script>
 </head>
 <body>
@@ -280,6 +281,14 @@
         </div>
 
         <button type="button" id="btn-imprimir-traza" class="btn-inmenso btn-especial">🖨️ IMPRIMIR INFORME DE FIRMAS (PDF)</button>
+
+        <div class="fila-agrupada espaciado-superior">
+            <button type="button" id="btn-exportar" class="btn-inmenso btn-exportar">📥 EXPORTAR COPIA (JSON)</button>
+            <label class="btn-inmenso btn-importar">
+                📤 IMPORTAR COPIA (JSON)
+                <input type="file" id="input-importar" accept=".json" style="display:none;">
+            </label>
+        </div>
     </div>
 
 </body>

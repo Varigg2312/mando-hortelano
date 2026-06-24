@@ -433,3 +433,13 @@ input.rango-alerta {
 .rango-pdf label {
     font-size: 0.9rem;
 }
+
+/* --- BOTONES EXPORTAR / IMPORTAR --- */
+.btn-exportar { background-color: #16a085; }
+.btn-importar {
+    background-color: #7f8c8d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
