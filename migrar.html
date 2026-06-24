@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración Supabase → Local</title>
+    <script src="db.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .caja { background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); text-align: center; }
+        h2 { margin-bottom: 8px; color: #2c3e50; }
+        p  { color: #7f8c8d; margin-bottom: 25px; }
+        input { width: 100%; padding: 14px; font-size: 1.5rem; text-align: center; letter-spacing: 8px; border: 2px solid #bdc3c7; border-radius: 8px; box-sizing: border-box; margin-bottom: 15px; }
+        button { width: 100%; padding: 18px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: white; background: #2980b9; transition: opacity 0.2s; }
+        button:hover   { opacity: 0.9; }
+        button:disabled{ opacity: 0.5; cursor: not-allowed; }
+        #estado { margin-top: 20px; padding: 16px; border-radius: 8px; font-weight: bold; display: none; }
+        .ok    { background: #d5f5e3; color: #1e8449; }
+        .error { background: #fadbd8; color: #c0392b; }
+        .info  { background: #d6eaf8; color: #1a5276; }
+        .paso  { margin: 6px 0; font-size: 0.9rem; text-align: left; }
+        a.volver { display: inline-block; margin-top: 20px; color: #2980b9; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="caja">
+    <h2>🔄 Migración de Datos</h2>
+    <p>Introduce el PIN de producción para autenticarte en Supabase por última vez y traer todos los registros al almacenamiento local.</p>
+
+    <input type="number" id="pin" placeholder="PIN" inputmode="numeric" maxlength="10">
+    <button id="btn-migrar">INICIAR MIGRACIÓN</button>
+
+    <div id="estado"></div>
+    <a class="volver" href="index.html" style="display:none;" id="enlace-volver">← Volver a la aplicación</a>
+</div>
+
+<script>
+    const SUPABASE_URL  = 'https://sesrmzxwpgxobfrmuaix.supabase.co';
+    const SUPABASE_KEY  = 'sb_publishable_JWQLt7yJm0bw406beocZAQ_-t28acp3';
+    const EMAIL         = 'alimentoselhortelano@gmail.com';
+
+    const estado   = document.getElementById('estado');
+    const btnMigrar = document.getElementById('btn-migrar');
+
+    function log(msg, tipo = 'info') {
+        estado.style.display = 'block';
+        estado.className     = tipo;
+        const p = document.createElement('p');
+        p.className   = 'paso';
+        p.textContent = msg;
+        estado.appendChild(p);
+    }
+
+    function limpiarEstado() {
+        estado.innerHTML = '';
+        estado.style.display = 'none';
+    }
+
+    document.getElementById('btn-migrar').addEventListener('click', async () => {
+        const pin = document.getElementById('pin').value.trim();
+        if (!pin) return;
+
+        limpiarEstado();
+        btnMigrar.disabled    = true;
+        btnMigrar.textContent = '⏳ Migrando...';
+
+        try {
+            // PASO 1: Autenticar contra Supabase
+            log('1/4 — Autenticando en Supabase...');
+            const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method:  'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ email: EMAIL, password: pin })
+            });
+            const authData = await authRes.json();
+            if (!authRes.ok || !authData.access_token) throw new Error('PIN incorrecto o Supabase inaccesible.');
+            const token = authData.access_token;
+            log('✅ Autenticación correcta.');
+
+            // PASO 2: Descargar registros de higiene
+            log('2/4 — Descargando registros de higiene...');
+            const hdrs = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` };
+            const rhRes = await fetch(`${SUPABASE_URL}/rest/v1/registro_higiene?select=*&order=fecha_hora.asc`, { headers: hdrs });
+            if (!rhRes.ok) throw new Error('No se pudo acceder a registro_higiene.');
+            const higiene = await rhRes.json();
+            log(`✅ ${higiene.length} registros de higiene descargados.`);
+
+            // PASO 3: Descargar registros de trazabilidad
+            log('3/4 — Descargando registros de trazabilidad...');
+            const rtRes = await fetch(`${SUPABASE_URL}/rest/v1/registro_trazabilidad?select=*&order=fecha_hora.asc`, { headers: hdrs });
+            if (!rtRes.ok) throw new Error('No se pudo acceder a registro_trazabilidad.');
+            const trazabilidad = await rtRes.json();
+            log(`✅ ${trazabilidad.length} registros de trazabilidad descargados.`);
+
+            // PASO 4: Importar en IndexedDB local
+            log('4/4 — Guardando en base de datos local...');
+            const resultado = await HortelanoDB.importarDesdeJSON({ higiene, trazabilidad });
+            log(`✅ Migración completa: ${resultado.higiene} higiene, ${resultado.trazabilidad} trazabilidad importados.`, 'ok');
+
+            document.getElementById('enlace-volver').style.display = 'inline-block';
+            btnMigrar.textContent = '✅ MIGRACIÓN COMPLETADA';
+
+        } catch (err) {
+            log(`❌ Error: ${err.message}`, 'error');
+            btnMigrar.disabled    = false;
+            btnMigrar.textContent = 'REINTENTAR MIGRACIÓN';
+        }
+    });
+
+    document.getElementById('pin').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') btnMigrar.click();
+    });
+</script>
+</body>
+</html>
