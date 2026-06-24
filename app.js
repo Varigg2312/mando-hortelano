@@ -592,10 +592,9 @@ function inicializarNavegacion() {
 // HISTORIAL
 // ==========================================================================
 function inicializarHistorial() {
-    const hoy    = new Date().toISOString().split('T')[0];
-    const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
-    document.getElementById('hist-desde').value = hace30.toISOString().split('T')[0];
-    document.getElementById('hist-hasta').value  = hoy;
+    // Sin filtro inicial: muestra todos los registros
+    document.getElementById('hist-desde').value = '';
+    document.getElementById('hist-hasta').value  = '';
 
     document.getElementById('htab-higiene').addEventListener('click', () => {
         histTabla  = HortelanoDB.T_HIGIENE; histPagina = 1;
@@ -612,10 +611,8 @@ function inicializarHistorial() {
 
     document.getElementById('btn-hist-filtrar').addEventListener('click', () => { histPagina = 1; cargarHistorial(); });
     document.getElementById('btn-hist-limpiar').addEventListener('click', () => {
-        const h2 = new Date().toISOString().split('T')[0];
-        const h30 = new Date(); h30.setDate(h30.getDate() - 30);
-        document.getElementById('hist-desde').value = h30.toISOString().split('T')[0];
-        document.getElementById('hist-hasta').value  = h2;
+        document.getElementById('hist-desde').value = '';
+        document.getElementById('hist-hasta').value  = '';
         histPagina = 1; cargarHistorial();
     });
 
