@@ -105,17 +105,23 @@ const HortelanoDB = (() => {
     // --- Importa registros desde un JSON exportado previamente ---
     async function importarDesdeJSON(json) {
         const bd = await abrir();
+
+        // Normaliza tanto arrays directos como el wrapper {value:[]} que genera PowerShell
+        const comoArray = (v) => Array.isArray(v) ? v : (v?.value ?? []);
+
         const volcar = (tabla, registros) => new Promise((res, rej) => {
+            const lista = comoArray(registros);
             const tx = bd.transaction(tabla, 'readwrite');
-            registros.forEach(r => tx.objectStore(tabla).put(r)); // put: inserta o actualiza por id
+            lista.forEach(r => tx.objectStore(tabla).put(r));
             tx.oncomplete = res;
             tx.onerror    = () => rej(tx.error);
         });
-        await volcar(T_HIGIENE, json.higiene       || []);
-        await volcar(T_TRAZA,   json.trazabilidad  || []);
+
+        await volcar(T_HIGIENE, json.higiene      || []);
+        await volcar(T_TRAZA,   json.trazabilidad || []);
         return {
-            higiene:       (json.higiene      || []).length,
-            trazabilidad:  (json.trazabilidad || []).length
+            higiene:      comoArray(json.higiene).length,
+            trazabilidad: comoArray(json.trazabilidad).length
         };
     }
 
