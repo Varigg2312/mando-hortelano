@@ -22,18 +22,10 @@ function mostrarToast(mensaje, tipo = 'exito') {
 }
 
 // ==========================================================================
-// MODAL DE CONFIRMACIÓN
+// CONFIRMACIÓN NATIVA (window.confirm — infalible, sin HTML extra)
 // ==========================================================================
 function confirmar(mensaje) {
-    return new Promise(resolve => {
-        const modal   = document.getElementById('modal-confirmacion');
-        document.getElementById('modal-mensaje').textContent = mensaje;
-        modal.classList.remove('oculto');
-
-        const resolver = (r) => { modal.classList.add('oculto'); resolve(r); };
-        document.getElementById('modal-confirmar-si').onclick = () => resolver(true);
-        document.getElementById('modal-confirmar-no').onclick = () => resolver(false);
-    });
+    return Promise.resolve(window.confirm(mensaje));
 }
 
 // ==========================================================================

@@ -390,41 +390,6 @@ input.rango-alerta {
 .toast-error         { background: var(--rojo); }
 .toast-advertencia   { background: var(--amarillo); color: var(--texto); }
 
-/* --- MODAL DE CONFIRMACIÓN --- */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.55);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9998;
-}
-.modal-caja {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 440px;
-    text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-}
-.modal-caja p {
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 22px;
-    color: var(--texto);
-    white-space: pre-line;
-}
-.modal-botones {
-    display: flex;
-    gap: 12px;
-}
-.modal-botones .btn-inmenso {
-    padding: 14px;
-    font-size: 1rem;
-}
 
 /* --- RANGO DE FECHAS PDF --- */
 .rango-pdf {
