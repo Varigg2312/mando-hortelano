@@ -1,0 +1,435 @@
+/* ==========================================================================
+   CIMIENTOS Y VARIABLES
+   ========================================================================== */
+:root { 
+    --verde: #27ae60; 
+    --amarillo: #f39c12;
+    --rojo: #c0392b; 
+    --azul: #2980b9;
+    --morado: #8e44ad;
+    --gris-fondo: #f4f4f9; 
+    --gris-claro: #ecf0f1;
+    --gris-borde: #bdc3c7;
+    --texto: #2c3e50; 
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body { 
+    font-family: sans-serif; 
+    background: var(--gris-fondo); 
+    color: var(--texto);
+    display: flex; 
+    justify-content: center; 
+    padding: 20px; 
+    min-height: 100vh; 
+}
+
+.contenedor-principal { 
+    width: 100%; 
+    max-width: 700px; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+}
+
+header { 
+    text-align: center; 
+    border-bottom: 2px solid var(--texto); 
+    margin-bottom: 20px; 
+    padding-bottom: 10px;
+}
+
+fieldset { 
+    border: 2px solid var(--gris-borde); 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    padding: 15px; 
+}
+
+legend {
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+.grupo-control {
+    margin-bottom: 15px;
+}
+
+/* Agrupación horizontal para controles gemelos (Cloro y pH) */
+.fila-agrupada {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.fila-agrupada .grupo-control {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.formulario-separado {
+    margin-top: 40px;
+}
+
+label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 5px; 
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea { 
+    width: 100%; 
+    padding: 12px; 
+    border: 2px solid var(--gris-borde); 
+    border-radius: 6px; 
+    font-size: 1.1rem; 
+    font-family: inherit;
+}
+
+textarea {
+    resize: vertical; 
+}
+
+.cuadricula-limpieza {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    background: var(--gris-claro);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.cuadricula-limpieza label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.cuadricula-limpieza input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.divisor {
+    margin: 30px 0;
+    border: 0;
+    border-top: 1px solid var(--gris-borde);
+}
+
+.espaciado-superior {
+    margin-top: 15px;
+}
+
+.espaciado-superior-mayor {
+    margin-top: 20px;
+}
+
+.btn-inmenso { 
+    width: 100%; 
+    padding: 20px; 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    cursor: pointer; 
+    border: none; 
+    border-radius: 8px; 
+    color: white; 
+    background: var(--texto);
+    transition: opacity 0.2s;
+}
+
+.btn-inmenso:hover {
+    opacity: 0.9;
+}
+
+.btn-peligro { background-color: var(--rojo); }
+.btn-accion { background-color: var(--azul); }
+.btn-especial { background-color: var(--morado); }
+
+.botones-binarios,
+.botones-ternarios { 
+    display: flex; 
+    gap: 10px; 
+}
+
+.botones-binarios label,
+.botones-ternarios label { 
+    flex: 1; 
+    padding: 15px; 
+    text-align: center; 
+    background: #eee; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: bold;
+    transition: background 0.2s, color 0.2s;
+}
+
+input[type="radio"] { display: none; }
+input[type="radio"]:checked + .btn-verde { background: var(--verde); color: white; }
+input[type="radio"]:checked + .btn-amarillo { background: var(--amarillo); color: black; }
+input[type="radio"]:checked + .btn-rojo { background: var(--rojo); color: white; }
+
+.grupo-control-voz {
+    margin-bottom: 10px;
+}
+
+.input-voz { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
+
+.btn-micro { 
+    padding: 10px 15px; 
+    font-size: 1.5rem; 
+    background: #f1f1f1; 
+    border: 1px solid #ccc; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    transition: background 0.2s;
+}
+
+.btn-micro:hover {
+    background: #e0e0e0;
+}
+
+.btn-micro.grabando {
+    background: var(--rojo);
+    color: white;
+    border-color: darkred;
+    animation: pulso-grabacion 1.5s infinite;
+}
+
+@keyframes pulso-grabacion {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.panel-graficas { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    background: #fff; 
+    padding: 15px; 
+    border: 2px solid var(--gris-borde); 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+}
+
+@media (min-width: 600px) { 
+    .panel-graficas { flex-direction: row; } 
+    .grafica-contenedor { flex: 1; width: 50%; } 
+}
+
+.grupo-firma { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    background: var(--gris-claro); 
+    padding: 15px; 
+    border-radius: 8px; 
+}
+
+#lienzo-firma { 
+    border: 2px solid var(--texto); 
+    background: #fff; 
+    border-radius: 4px; 
+    touch-action: none; 
+    margin: 10px 0; 
+}
+
+#btn-limpiar-firma { 
+    background: var(--rojo); 
+    color: white; 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: bold; 
+}
+
+.login-overlay { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background: var(--texto); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 9999;
+}
+
+.login-caja { 
+    background: white; 
+    padding: 40px; 
+    border-radius: 12px; 
+    width: 90%; 
+    max-width: 400px; 
+    text-align: center; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+}
+
+.login-caja h2 { margin-bottom: 5px; }
+.login-caja p { color: #7f8c8d; margin-bottom: 25px; }
+
+.input-pin {
+    font-size: 2.5rem;
+    text-align: center;
+    letter-spacing: 10px;
+    margin-bottom: 15px;
+}
+
+.mensaje-error { color: var(--rojo); font-weight: bold; }
+
+.navegacion-tactica {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.btn-tab {
+    flex: 1;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: 2px solid var(--texto);
+    background: transparent;
+    color: var(--texto);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-tab.activo { background: var(--texto); color: white; }
+
+.oculto { display: none; }
+
+/* --- TRES GRÁFICAS EN FILA --- */
+@media (min-width: 600px) {
+    .panel-graficas { flex-direction: row; flex-wrap: wrap; }
+    .grafica-contenedor { flex: 1; min-width: 0; }
+}
+
+/* --- CANVAS FIRMA RESPONSIVE --- */
+#lienzo-firma {
+    border: 2px solid var(--texto);
+    background: #fff;
+    border-radius: 4px;
+    touch-action: none;
+    margin: 10px 0;
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+    aspect-ratio: 560 / 210;
+}
+
+/* --- VALIDACIÓN DE RANGOS --- */
+input.rango-alerta {
+    border-color: var(--rojo);
+    background-color: #fdf2f2;
+    color: var(--rojo);
+}
+
+/* --- BADGE: HOY YA REGISTRADO --- */
+.badge-hoy {
+    display: inline-block;
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+.badge-hoy-ok       { background: #d5f5e3; color: #1e8449; }
+.badge-hoy-pendiente{ background: #fdebd0; color: #ca6f1e; }
+
+/* --- TOASTS --- */
+#contenedor-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    pointer-events: none;
+    width: 90%;
+    max-width: 500px;
+}
+.toast {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    background: var(--texto);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast.visible       { opacity: 1; transform: translateY(0); }
+.toast-exito         { background: var(--verde); }
+.toast-error         { background: var(--rojo); }
+.toast-advertencia   { background: var(--amarillo); color: var(--texto); }
+
+/* --- MODAL DE CONFIRMACIÓN --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
+}
+.modal-caja {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 440px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+.modal-caja p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 22px;
+    color: var(--texto);
+    white-space: pre-line;
+}
+.modal-botones {
+    display: flex;
+    gap: 12px;
+}
+.modal-botones .btn-inmenso {
+    padding: 14px;
+    font-size: 1rem;
+}
+
+/* --- RANGO DE FECHAS PDF --- */
+.rango-pdf {
+    margin-bottom: 10px;
+}
+.rango-pdf label {
+    font-size: 0.9rem;
+}

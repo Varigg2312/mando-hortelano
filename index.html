@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mando Central - El Hortelano</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+    <script src="app.js" defer></script>
+</head>
+<body>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="pantalla-login" class="login-overlay">
+        <div class="login-caja">
+            <h2>Acceso al Mando</h2>
+            <p>Introduce el PIN de Producción</p>
+            <input type="number" id="login-pin" class="input-pin" placeholder="0 0 0 0" pattern="\d*" inputmode="numeric">
+            <button id="btn-login" class="btn-inmenso btn-peligro espaciado-superior">DESBLOQUEAR</button>
+            <p id="login-error" class="mensaje-error oculto espaciado-superior"></p>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMACIÓN -->
+    <div id="modal-confirmacion" class="modal-overlay oculto">
+        <div class="modal-caja">
+            <p id="modal-mensaje"></p>
+            <div class="modal-botones">
+                <button id="modal-confirmar-no"  class="btn-inmenso btn-peligro">CANCELAR</button>
+                <button id="modal-confirmar-si"  class="btn-inmenso btn-accion">CONFIRMAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE TOASTS -->
+    <div id="contenedor-toast"></div>
+
+    <div class="contenedor-principal">
+        <header>
+            <h1>Mando Central - El Hortelano</h1>
+            <p id="reloj">--:--:--</p>
+        </header>
+
+        <nav class="navegacion-tactica">
+            <button id="tab-higiene"        class="btn-tab activo">Control de Higiene</button>
+            <button id="tab-trazabilidad"   class="btn-tab">Trazabilidad Total</button>
+        </nav>
+
+        <!-- BADGE: ESTADO DE REGISTRO HOY -->
+        <div id="badge-registro-hoy" class="badge-hoy oculto"></div>
+
+        <!-- ================================ -->
+        <!-- VISTA: HIGIENE                   -->
+        <!-- ================================ -->
+        <div id="vista-higiene">
+            <div class="panel-graficas">
+                <div class="grafica-contenedor"><canvas id="grafica-temperatura"></canvas></div>
+                <div class="grafica-contenedor"><canvas id="grafica-cloro"></canvas></div>
+                <div class="grafica-contenedor"><canvas id="grafica-vehiculo"></canvas></div>
+            </div>
+
+            <form id="formulario-higiene">
+                <fieldset>
+                    <legend>Plan de Agua y Temperaturas</legend>
+
+                    <div class="grupo-control">
+                        <label for="fecha-higiene">Fecha de Registro:</label>
+                        <input type="date" id="fecha-higiene" required>
+                    </div>
+
+                    <div class="fila-agrupada">
+                        <div class="grupo-control">
+                            <label for="cloro">Cloro Libre Residual (ppm) <small>0.2–1.0</small>:</label>
+                            <input type="number" id="cloro" step="0.1" required>
+                        </div>
+                        <div class="grupo-control">
+                            <label for="ph">pH del Agua <small>6.5–8.5</small>:</label>
+                            <input type="number" id="ph" step="0.1" required>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control">
+                        <label>Examen Organoléptico:</label>
+                        <div class="botones-binarios">
+                            <input type="radio" id="org-ok"  name="organoleptico" value="Normal" required>
+                            <label for="org-ok"  class="btn-verde">NORMAL</label>
+                            <input type="radio" id="org-mal" name="organoleptico" value="Anómalo">
+                            <label for="org-mal" class="btn-rojo">ANÓMALO</label>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control">
+                        <label for="temperatura-cam1">Temp. Cámara 1 (ºC) <small>máx. 4ºC</small>:</label>
+                        <input type="number" id="temperatura-cam1" step="0.1" required>
+                    </div>
+                    <div class="grupo-control">
+                        <label for="temperatura-vehiculo">Temp. Vehículo Reparto (ºC) <small>máx. 4ºC</small>:</label>
+                        <input type="number" id="temperatura-vehiculo" step="0.1" required>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Registro de Ejecución de Limpieza</legend>
+                    <div class="cuadricula-limpieza">
+                        <label><input type="checkbox" id="limp-accesos"        value="Accesos">          Accesos</label>
+                        <label><input type="checkbox" id="limp-vehiculo"       value="Vehículo">         Vehículo</label>
+                        <label><input type="checkbox" id="limp-almacen-envases"value="Almacén envases">  Almacén envases</label>
+                        <label><input type="checkbox" id="limp-obrador"        value="Obrador">          Obrador</label>
+                        <label><input type="checkbox" id="limp-camara1"        value="Cámara 1">         Cámara 1</label>
+                        <label><input type="checkbox" id="limp-utillaje"       value="Utillaje">         Utillaje elaboración</label>
+                        <label><input type="checkbox" id="limp-almacen"        value="Almacén">          Almacén General</label>
+                        <label><input type="checkbox" id="limp-aseo"           value="Aseo Vestuario">   Aseo / Vestuario</label>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Mantenimiento, Plagas y Observaciones</legend>
+
+                    <div class="grupo-control">
+                        <label>Control de Plagas (Insectos/Roedores):</label>
+                        <div class="botones-binarios">
+                            <input type="radio" id="plagas-no" name="plagas" value="Sin incidencias" required>
+                            <label for="plagas-no" class="btn-verde">SIN INCIDENCIAS</label>
+                            <input type="radio" id="plagas-si" name="plagas" value="Presencia detectada">
+                            <label for="plagas-si" class="btn-rojo">PRESENCIA</label>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control">
+                        <label>Estado Instalaciones y Utillaje:</label>
+                        <div class="botones-ternarios">
+                            <input type="radio" id="mant-bien"   name="mantenimiento" value="Bien" required>
+                            <label for="mant-bien"   class="btn-verde">BIEN</label>
+                            <input type="radio" id="mant-regular" name="mantenimiento" value="Regular">
+                            <label for="mant-regular" class="btn-amarillo">REGULAR</label>
+                            <input type="radio" id="mant-mal"    name="mantenimiento" value="Mal">
+                            <label for="mant-mal"    class="btn-rojo">MAL</label>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control">
+                        <label for="observaciones">Observaciones (Averías, o detalles si hay plagas):</label>
+                        <textarea id="observaciones" rows="3" placeholder="Si marcaste 'PRESENCIA' en plagas, detalla causa y localización aquí..."></textarea>
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="btn-inmenso">FIRMAR PLAN GENERAL DE HIGIENE</button>
+            </form>
+        </div>
+
+        <!-- ================================ -->
+        <!-- VISTA: TRAZABILIDAD              -->
+        <!-- ================================ -->
+        <div id="vista-trazabilidad" class="oculto">
+            <form id="formulario-trazabilidad">
+                <fieldset>
+                    <legend>Trazabilidad Total (Dictado Activo)</legend>
+
+                    <div class="grupo-control-voz">
+                        <label for="fecha-trazabilidad">Fecha de Producción/Lote:</label>
+                        <div class="input-voz">
+                            <input type="date" id="fecha-trazabilidad" required>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control-voz">
+                        <label for="lote-tomate">Lote Tomates:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-tomate" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de tomates" data-dictado-target="lote-tomate">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-vinagre">Lote Vinagre:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-vinagre" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de vinagre" data-dictado-target="lote-vinagre">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-sal">Lote Sal:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-sal" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de sal" data-dictado-target="lote-sal">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-ajo">Lote Ajo:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-ajo" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de ajo" data-dictado-target="lote-ajo">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-aceite">Lote Aceite:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-aceite" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de aceite" data-dictado-target="lote-aceite">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-limon">Lote Limón:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-limon" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de limón" data-dictado-target="lote-limon">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-pimiento">Lote Pimiento:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-pimiento" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de pimiento" data-dictado-target="lote-pimiento">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="lote-envase">Lote Envases:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-envase" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de envases" data-dictado-target="lote-envase">🎤</button>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control-voz">
+                        <label for="litros-prod">Litros Producidos (Gazpacho):</label>
+                        <div class="input-voz">
+                            <input type="number" id="litros-prod" value="0" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar litros producidos" data-dictado-target="litros-prod">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="kg-salmorejo">Kg Producidos (Salmorejo):</label>
+                        <div class="input-voz">
+                            <input type="number" id="kg-salmorejo" value="0" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar kg producidos" data-dictado-target="kg-salmorejo">🎤</button>
+                        </div>
+                    </div>
+
+                    <div class="grupo-control-voz">
+                        <label for="lote-salida">Lote Venta/Salida:</label>
+                        <div class="input-voz">
+                            <input type="text" id="lote-salida" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar lote de venta" data-dictado-target="lote-salida">🎤</button>
+                        </div>
+                    </div>
+                    <div class="grupo-control-voz">
+                        <label for="cliente-destino">Cliente / Destino:</label>
+                        <div class="input-voz">
+                            <input type="text" id="cliente-destino" required>
+                            <button type="button" class="btn-micro" aria-label="Dictar cliente o destino" data-dictado-target="cliente-destino">🎤</button>
+                        </div>
+                    </div>
+
+                    <div class="grupo-firma espaciado-superior-mayor">
+                        <label>Firma Biométrica del Responsable (Obligatoria):</label>
+                        <canvas id="lienzo-firma" width="560" height="210"></canvas>
+                        <button type="button" id="btn-limpiar-firma">Limpiar Cristal</button>
+                    </div>
+                </fieldset>
+                <button type="submit" class="btn-inmenso btn-accion">SELLAR LOTE COMPLETO</button>
+            </form>
+        </div>
+
+        <hr class="divisor">
+
+        <!-- RANGO DE FECHAS PARA PDF -->
+        <div class="fila-agrupada rango-pdf">
+            <div class="grupo-control">
+                <label for="pdf-desde">Informe desde:</label>
+                <input type="date" id="pdf-desde">
+            </div>
+            <div class="grupo-control">
+                <label for="pdf-hasta">hasta:</label>
+                <input type="date" id="pdf-hasta">
+            </div>
+        </div>
+
+        <button type="button" id="btn-imprimir-traza" class="btn-inmenso btn-especial">🖨️ IMPRIMIR INFORME DE FIRMAS (PDF)</button>
+    </div>
+
+</body>
+</html>
