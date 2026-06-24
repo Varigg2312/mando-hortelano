@@ -512,7 +512,7 @@ function prepararFormularios() {
     });
 }
 
-// --- GENERADOR PDF CON RANGO DE FECHAS ---
+// --- GENERADOR PDF CON RANGO DE FECHAS Y ANCHOS DINÁMICOS ---
 function prepararGeneradorPDF() {
     document.getElementById('btn-imprimir-traza').addEventListener('click', async () => {
         const btn = document.getElementById('btn-imprimir-traza');
@@ -538,67 +538,138 @@ function prepararGeneradorPDF() {
             const t = await rt.json();
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape');
-            const PW  = doc.internal.pageSize.getWidth();
-            const PH  = doc.internal.pageSize.getHeight();
-            const rangoTexto = (desde && hasta) ? ` | ${desde} — ${hasta}` : '';
+            // A4 landscape: 297×210mm — margen 8mm → 281mm útiles
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const PW  = doc.internal.pageSize.getWidth();   // 297
+            const PH  = doc.internal.pageSize.getHeight();  // 210
+            const ML  = 8;  // margen izquierdo
+            const rangoTexto = (desde && hasta) ? `  ${desde} — ${hasta}` : '';
+
+            const cabeceraDoc = (titulo) => {
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text(titulo + rangoTexto, ML, 12);
+                doc.setFont(undefined, 'normal');
+            };
 
             const numerarPagina = () => {
                 const n = doc.internal.getCurrentPageInfo().pageNumber;
-                doc.setFontSize(8);
-                doc.setTextColor(150);
-                doc.text(`Página ${n}`, PW - 15, PH - 6, { align: 'right' });
+                doc.setFontSize(7);
+                doc.setTextColor(140);
+                doc.text(`El Hortelano — Informe APPCC | Pág. ${n}`, PW / 2, PH - 5, { align: 'center' });
                 doc.setTextColor(0);
             };
 
-            // PÁGINA 1: HIGIENE
-            doc.setFontSize(12);
-            doc.text(`REGISTRO DE HIGIENE Y MANTENIMIENTO — EL HORTELANO${rangoTexto}`, 14, 14);
+            // ─────────────────────────────────────────────
+            // PÁGINA 1: HIGIENE Y MANTENIMIENTO
+            // Anchos (mm): 18+13+12+13+13+18+24+15+80+75 = 281
+            // ─────────────────────────────────────────────
+            cabeceraDoc('REGISTRO DE HIGIENE Y MANTENIMIENTO — EL HORTELANO');
 
             doc.autoTable({
-                startY: 20,
-                head: [['Fecha', 'Cloro', 'pH', 'ºC Cam', 'ºC Veh', 'Org.', 'Plagas', 'Mant.', 'Zonas Limpieza', 'Observaciones']],
+                startY: 16,
+                margin: { left: ML, right: ML },
+                head: [['Fecha', 'Cloro\n(ppm)', 'pH', 'ºC\nCám.1', 'ºC\nVeh.', 'Org.', 'Plagas', 'Mant.', 'Zonas de Limpieza Ejecutadas', 'Observaciones / Incidencias']],
                 body: h.map(x => [
                     new Date(x.fecha_hora).toLocaleDateString('es-ES'),
-                    x.cloro ?? '-',
-                    x.ph ?? '-',
-                    x.temperatura ?? '-',
+                    x.cloro   ?? '-',
+                    x.ph      ?? '-',
+                    x.temperatura         ?? '-',
                     x.temperatura_vehiculo ?? '-',
-                    x.organoleptico || '-',
-                    x.plagas || '-',
+                    x.organoleptico        || '-',
+                    x.plagas               || '-',
                     x.estado_mantenimiento || '-',
-                    x.zonas_limpieza || '-',
-                    x.observaciones || ''
+                    x.zonas_limpieza       || '-',
+                    x.observaciones        || ''
                 ]),
                 theme: 'grid',
-                styles: { fontSize: 7.5, halign: 'center', cellPadding: 1.5 },
-                headStyles: { fillColor: [44, 62, 80] },
-                columnStyles: { 8: { cellWidth: 52, halign: 'left' }, 9: { cellWidth: 42, halign: 'left' } },
+                styles:     { fontSize: 6, halign: 'center', cellPadding: 1, overflow: 'linebreak', minCellHeight: 6 },
+                headStyles: { fillColor: [44, 62, 80], fontSize: 6, halign: 'center', cellPadding: 1.5, fontStyle: 'bold' },
+                columnStyles: {
+                    0:  { cellWidth: 18 },
+                    1:  { cellWidth: 13 },
+                    2:  { cellWidth: 12 },
+                    3:  { cellWidth: 13 },
+                    4:  { cellWidth: 13 },
+                    5:  { cellWidth: 18 },
+                    6:  { cellWidth: 24 },
+                    7:  { cellWidth: 15 },
+                    8:  { cellWidth: 80, halign: 'left' },
+                    9:  { cellWidth: 75, halign: 'left' }
+                },
+                // Marca en rojo valores fuera de rango APPCC
+                didParseCell: (data) => {
+                    if (data.section !== 'body') return;
+                    const v = parseFloat(data.cell.raw);
+                    const alertar = (condicion) => {
+                        if (condicion) {
+                            data.cell.styles.fillColor = [255, 210, 210];
+                            data.cell.styles.textColor = [160, 0, 0];
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    };
+                    if (data.column.index === 1) alertar(!isNaN(v) && (v < 0.2 || v > 1.0));
+                    if (data.column.index === 2) alertar(!isNaN(v) && (v < 6.5 || v > 8.5));
+                    if (data.column.index === 3) alertar(!isNaN(v) && v > 4);
+                    if (data.column.index === 4) alertar(!isNaN(v) && v > 4);
+                },
                 didDrawPage: numerarPagina
             });
 
-            // PÁGINA 2: TRAZABILIDAD
+            // ─────────────────────────────────────────────
+            // PÁGINA 2: TRAZABILIDAD DE PRODUCCIÓN
+            // Anchos (mm): 16+18+18+16+16+18+16+18+18+14+14+28+45+24 = 279 (~281)
+            // ─────────────────────────────────────────────
             doc.addPage();
-            doc.setFontSize(12);
-            doc.text(`REGISTRO DE TRAZABILIDAD DE PRODUCCIÓN — EL HORTELANO${rangoTexto}`, 14, 14);
+            cabeceraDoc('REGISTRO DE TRAZABILIDAD DE PRODUCCIÓN — EL HORTELANO');
 
             doc.autoTable({
-                startY: 20,
-                head: [['Fecha', 'Tom', 'Vin', 'Sal', 'Ajo', 'Ace', 'Lim', 'Pim', 'Env', 'L.Gaz', 'Kg.Sal', 'Lote Salida', 'Destino', 'Firma']],
+                startY: 16,
+                margin: { left: ML, right: ML },
+                head: [['Fecha', 'Tomate', 'Vinagre', 'Sal', 'Ajo', 'Aceite', 'Limón', 'Pimiento', 'Envases', 'L.Gaz\n(L)', 'Kg.Sal\n(Kg)', 'Lote Salida', 'Cliente / Destino', 'Firma']],
                 body: t.map(x => [
                     new Date(x.fecha_hora).toLocaleDateString('es-ES'),
-                    x.lote_tomate || '-', x.lote_vinagre || '-', x.lote_sal || '-', x.lote_ajo || '-',
-                    x.lote_aceite || '-', x.lote_limon || '-', x.lote_pimiento || '-', x.lote_envases || '-',
-                    x.litros || '0', x.kg_salmorejo || '0', x.lote_gazpacho_salida || '-', x.cliente_destino || '-', ''
+                    x.lote_tomate   || '-',
+                    x.lote_vinagre  || '-',
+                    x.lote_sal      || '-',
+                    x.lote_ajo      || '-',
+                    x.lote_aceite   || '-',
+                    x.lote_limon    || '-',
+                    x.lote_pimiento || '-',
+                    x.lote_envases  || '-',
+                    x.litros        ?? '0',
+                    x.kg_salmorejo  ?? '0',
+                    x.lote_gazpacho_salida || '-',
+                    x.cliente_destino      || '-',
+                    ''
                 ]),
                 theme: 'grid',
-                styles: { fontSize: 7, halign: 'center', cellPadding: 1.5 },
-                headStyles: { fillColor: [39, 174, 96] },
+                styles:     { fontSize: 5.5, halign: 'center', cellPadding: 1, overflow: 'linebreak', minCellHeight: 8 },
+                headStyles: { fillColor: [39, 174, 96], fontSize: 5.5, halign: 'center', cellPadding: 1.5, fontStyle: 'bold' },
+                columnStyles: {
+                    0:  { cellWidth: 16 },
+                    1:  { cellWidth: 18 },
+                    2:  { cellWidth: 18 },
+                    3:  { cellWidth: 16 },
+                    4:  { cellWidth: 16 },
+                    5:  { cellWidth: 18 },
+                    6:  { cellWidth: 16 },
+                    7:  { cellWidth: 18 },
+                    8:  { cellWidth: 18 },
+                    9:  { cellWidth: 14 },
+                    10: { cellWidth: 14 },
+                    11: { cellWidth: 28 },
+                    12: { cellWidth: 45, halign: 'left' },
+                    13: { cellWidth: 24 }
+                },
                 didDrawCell: (data) => {
                     if (data.column.index === 13 && data.section === 'body') {
                         const firmaData = t[data.row.index]?.firma;
                         if (firmaData?.startsWith('data:image')) {
-                            doc.addImage(firmaData, 'PNG', data.cell.x + 1, data.cell.y + 1, 14, 6);
+                            // Centra la imagen en la celda de firma (22×9mm)
+                            const ix = data.cell.x + 1;
+                            const iy = data.cell.y + (data.cell.height - 9) / 2;
+                            doc.addImage(firmaData, 'PNG', ix, iy, 22, 9);
                         }
                     }
                 },
