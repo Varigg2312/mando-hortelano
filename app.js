@@ -1,8 +1,14 @@
 // ==========================================================================
 // CONFIGURACIÓN
 // ==========================================================================
-const PIN_ACCESO    = '1234';          // ← Cambia este valor para modificar el PIN
+const PIN_ACCESO    = '1234';
 const CAMPOS_MEMORIA = ['lote-vinagre', 'lote-sal', 'lote-ajo', 'lote-aceite', 'lote-limon', 'lote-pimiento', 'lote-envase', 'cliente-destino'];
+
+// Estado del Historial
+let histPagina    = 1;
+let histRegistros = [];
+let histTabla     = HortelanoDB.T_HIGIENE;
+const HIST_POR_PAGINA = 10;
 
 // ==========================================================================
 // SISTEMA DE NOTIFICACIONES (TOASTS)
@@ -115,6 +121,7 @@ function arrancarOperaciones() {
     prepararFormularios();
     prepararGeneradorPDF();
     prepararExportImport();
+    inicializarHistorial();
     inicializarNavegacion();
     verificarRegistroHoy();
 }
@@ -559,20 +566,187 @@ function prepararExportImport() {
 
 // --- NAVEGACIÓN TÁCTICA ---
 function inicializarNavegacion() {
-    const btnH = document.getElementById('tab-higiene');
-    const btnT = document.getElementById('tab-trazabilidad');
-    const vH   = document.getElementById('vista-higiene');
-    const vT   = document.getElementById('vista-trazabilidad');
-    if (!btnH || !btnT) return;
+    const tabs = ['higiene', 'trazabilidad', 'historial'];
+    const btn  = (id) => document.getElementById(`tab-${id}`);
+    const vis  = (id) => document.getElementById(`vista-${id}`);
 
-    btnH.addEventListener('click', () => {
-        btnH.classList.add('activo'); btnT.classList.remove('activo');
-        vH.classList.remove('oculto'); vT.classList.add('oculto');
-        setTimeout(() => { if (chartTemp) chartTemp.resize(); if (chartCloro) chartCloro.resize(); if (chartVeh) chartVeh.resize(); }, 10);
+    const activar = (activo) => {
+        tabs.forEach(t => {
+            btn(t)?.classList.toggle('activo', t === activo);
+            vis(t)?.classList.toggle('oculto', t !== activo);
+        });
+        if (activo === 'higiene') {
+            setTimeout(() => {
+                if (chartTemp)  chartTemp.resize();
+                if (chartCloro) chartCloro.resize();
+                if (chartVeh)   chartVeh.resize();
+            }, 10);
+        }
+        if (activo === 'historial') cargarHistorial();
+    };
+
+    tabs.forEach(t => btn(t)?.addEventListener('click', () => activar(t)));
+}
+
+// ==========================================================================
+// HISTORIAL
+// ==========================================================================
+function inicializarHistorial() {
+    const hoy    = new Date().toISOString().split('T')[0];
+    const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
+    document.getElementById('hist-desde').value = hace30.toISOString().split('T')[0];
+    document.getElementById('hist-hasta').value  = hoy;
+
+    document.getElementById('htab-higiene').addEventListener('click', () => {
+        histTabla  = HortelanoDB.T_HIGIENE; histPagina = 1;
+        document.getElementById('htab-higiene').classList.add('activo');
+        document.getElementById('htab-traza').classList.remove('activo');
+        cargarHistorial();
+    });
+    document.getElementById('htab-traza').addEventListener('click', () => {
+        histTabla  = HortelanoDB.T_TRAZA; histPagina = 1;
+        document.getElementById('htab-traza').classList.add('activo');
+        document.getElementById('htab-higiene').classList.remove('activo');
+        cargarHistorial();
     });
 
-    btnT.addEventListener('click', () => {
-        btnT.classList.add('activo'); btnH.classList.remove('activo');
-        vT.classList.remove('oculto'); vH.classList.add('oculto');
+    document.getElementById('btn-hist-filtrar').addEventListener('click', () => { histPagina = 1; cargarHistorial(); });
+    document.getElementById('btn-hist-limpiar').addEventListener('click', () => {
+        const h2 = new Date().toISOString().split('T')[0];
+        const h30 = new Date(); h30.setDate(h30.getDate() - 30);
+        document.getElementById('hist-desde').value = h30.toISOString().split('T')[0];
+        document.getElementById('hist-hasta').value  = h2;
+        histPagina = 1; cargarHistorial();
     });
+
+    document.getElementById('hist-prev').addEventListener('click', () => {
+        if (histPagina > 1) { histPagina--; renderTablaHistorial(); }
+    });
+    document.getElementById('hist-next').addEventListener('click', () => {
+        if (histPagina < Math.ceil(histRegistros.length / HIST_POR_PAGINA)) { histPagina++; renderTablaHistorial(); }
+    });
+}
+
+async function cargarHistorial() {
+    const desde = document.getElementById('hist-desde').value;
+    const hasta = document.getElementById('hist-hasta').value;
+    try {
+        const datos = await HortelanoDB.obtenerPorRango(histTabla, desde, hasta);
+        histRegistros = datos.reverse();
+        renderStatsHistorial();
+        renderTablaHistorial();
+    } catch (e) {
+        mostrarToast('Error al cargar el historial.', 'error');
+    }
+}
+
+function renderStatsHistorial() {
+    const c = document.getElementById('hist-stats');
+    const r = histRegistros;
+    const n = r.length;
+
+    if (histTabla === HortelanoDB.T_HIGIENE) {
+        const avgCloro = n ? (r.reduce((s, x) => s + (x.cloro || 0), 0) / n).toFixed(2) : '-';
+        const avgTemp  = n ? (r.reduce((s, x) => s + (x.temperatura || 0), 0) / n).toFixed(1) : '-';
+        const avgPH    = n ? (r.reduce((s, x) => s + (x.ph || 0), 0) / n).toFixed(1) : '-';
+        const alertas  = r.filter(x =>
+            (x.cloro < 0.2 || x.cloro > 1.0) ||
+            (x.ph    < 6.5 || x.ph    > 8.5) ||
+            x.temperatura          > 4 ||
+            x.temperatura_vehiculo > 4
+        ).length;
+        c.innerHTML = `
+            <div class="stat-card"><div class="stat-emoji">📋</div><div class="stat-valor">${n}</div><div class="stat-label">Registros totales</div></div>
+            <div class="stat-card"><div class="stat-emoji">💧</div><div class="stat-valor">${avgCloro}</div><div class="stat-label">Media cloro (ppm)</div></div>
+            <div class="stat-card"><div class="stat-emoji">🌡️</div><div class="stat-valor">${avgTemp}</div><div class="stat-label">Media ºC Cámara 1</div></div>
+            <div class="stat-card"><div class="stat-emoji">⚗️</div><div class="stat-valor">${avgPH}</div><div class="stat-label">Media pH</div></div>
+            <div class="stat-card ${alertas > 0 ? 'stat-alerta' : ''}"><div class="stat-emoji">${alertas > 0 ? '🚨' : '✅'}</div><div class="stat-valor">${alertas}</div><div class="stat-label">Alertas APPCC</div></div>`;
+    } else {
+        const litros   = r.reduce((s, x) => s + (parseFloat(x.litros)      || 0), 0);
+        const kg       = r.reduce((s, x) => s + (parseFloat(x.kg_salmorejo) || 0), 0);
+        const clientes = new Set(r.map(x => x.cliente_destino).filter(Boolean)).size;
+        c.innerHTML = `
+            <div class="stat-card"><div class="stat-emoji">📦</div><div class="stat-valor">${n}</div><div class="stat-label">Lotes totales</div></div>
+            <div class="stat-card"><div class="stat-emoji">🥤</div><div class="stat-valor">${litros.toFixed(0)}</div><div class="stat-label">Litros gazpacho</div></div>
+            <div class="stat-card"><div class="stat-emoji">🍲</div><div class="stat-valor">${kg.toFixed(0)}</div><div class="stat-label">Kg salmorejo</div></div>
+            <div class="stat-card"><div class="stat-emoji">🏪</div><div class="stat-valor">${clientes}</div><div class="stat-label">Clientes únicos</div></div>`;
+    }
+}
+
+function renderTablaHistorial() {
+    const thead   = document.getElementById('hist-thead');
+    const tbody   = document.getElementById('hist-tbody');
+    const pagInfo = document.getElementById('hist-paginfo');
+    const infoEl  = document.getElementById('hist-info');
+    const totalPags = Math.max(1, Math.ceil(histRegistros.length / HIST_POR_PAGINA));
+    if (histPagina > totalPags) histPagina = totalPags;
+
+    const inicio = (histPagina - 1) * HIST_POR_PAGINA;
+    const pagina = histRegistros.slice(inicio, inicio + HIST_POR_PAGINA);
+
+    pagInfo.textContent = `Pág. ${histPagina} / ${totalPags}  (${histRegistros.length} registros)`;
+    document.getElementById('hist-prev').disabled = histPagina <= 1;
+    document.getElementById('hist-next').disabled = histPagina >= totalPags;
+    infoEl.textContent = histRegistros.length === 0 ? 'No hay registros para el período seleccionado.' : '';
+
+    const fecha = (iso) => iso ? new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '-';
+
+    if (histTabla === HortelanoDB.T_HIGIENE) {
+        thead.innerHTML = `<tr>
+            <th>Fecha</th><th>Cloro</th><th>pH</th><th>ºC Cám.</th><th>ºC Veh.</th>
+            <th>Org.</th><th>Plagas</th><th>Mant.</th>
+            <th class="td-left">Zonas</th><th class="td-left">Observaciones</th><th>✕</th></tr>`;
+        tbody.innerHTML = pagina.map(x => {
+            const ca = !isNaN(x.cloro) && (x.cloro < 0.2 || x.cloro > 1.0);
+            const pa = !isNaN(x.ph)    && (x.ph    < 6.5 || x.ph    > 8.5);
+            const ta = !isNaN(x.temperatura)          && x.temperatura          > 4;
+            const va = !isNaN(x.temperatura_vehiculo)  && x.temperatura_vehiculo > 4;
+            return `<tr>
+                <td>${fecha(x.fecha_hora)}</td>
+                <td class="${ca?'td-alerta':''}">${x.cloro??'-'}</td>
+                <td class="${pa?'td-alerta':''}">${x.ph??'-'}</td>
+                <td class="${ta?'td-alerta':''}">${x.temperatura??'-'}</td>
+                <td class="${va?'td-alerta':''}">${x.temperatura_vehiculo??'-'}</td>
+                <td>${x.organoleptico||'-'}</td>
+                <td>${x.plagas||'-'}</td>
+                <td>${x.estado_mantenimiento||'-'}</td>
+                <td class="td-left">${x.zonas_limpieza||'-'}</td>
+                <td class="td-left">${x.observaciones||''}</td>
+                <td><button class="btn-eliminar" data-id="${x.id}">✕</button></td></tr>`;
+        }).join('');
+    } else {
+        thead.innerHTML = `<tr>
+            <th>Fecha</th><th>Tomate</th><th>Vinagre</th><th>Sal</th><th>Ajo</th>
+            <th>Aceite</th><th>Limón</th><th>Pimiento</th><th>Envases</th>
+            <th>L.Gaz</th><th>Kg.Sal</th><th>Lote Salida</th>
+            <th class="td-left">Cliente</th><th>Firma</th><th>✕</th></tr>`;
+        tbody.innerHTML = pagina.map(x => `<tr>
+            <td>${fecha(x.fecha_hora)}</td>
+            <td>${x.lote_tomate||'-'}</td><td>${x.lote_vinagre||'-'}</td>
+            <td>${x.lote_sal||'-'}</td><td>${x.lote_ajo||'-'}</td>
+            <td>${x.lote_aceite||'-'}</td><td>${x.lote_limon||'-'}</td>
+            <td>${x.lote_pimiento||'-'}</td><td>${x.lote_envases||'-'}</td>
+            <td>${x.litros??'0'}</td><td>${x.kg_salmorejo??'0'}</td>
+            <td>${x.lote_gazpacho_salida||'-'}</td>
+            <td class="td-left">${x.cliente_destino||'-'}</td>
+            <td>${x.firma?.startsWith('data:image') ? `<img src="${x.firma}" style="height:28px;border:1px solid #ccc;border-radius:3px;">` : (x.firma||'-')}</td>
+            <td><button class="btn-eliminar" data-id="${x.id}">✕</button></td></tr>`
+        ).join('');
+    }
+
+    tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', () => eliminarRegistroHistorial(histTabla, Number(btn.dataset.id)));
+    });
+}
+
+async function eliminarRegistroHistorial(tabla, id) {
+    if (!window.confirm('¿Eliminar este registro de forma permanente? Esta acción no se puede deshacer.')) return;
+    try {
+        await HortelanoDB.eliminar(tabla, id);
+        mostrarToast('Registro eliminado.', 'advertencia');
+        await cargarHistorial();
+        if (tabla === HortelanoDB.T_HIGIENE) { inicializarGraficas(); verificarRegistroHoy(); }
+    } catch (e) {
+        mostrarToast(`Error al eliminar: ${e.message}`, 'error');
+    }
 }

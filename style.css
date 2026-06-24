@@ -399,6 +399,67 @@ input.rango-alerta {
     font-size: 0.9rem;
 }
 
+/* --- HISTORIAL --- */
+.nav-historial { display: flex; gap: 8px; margin-bottom: 16px; }
+.btn-htab {
+    flex: 1; padding: 10px; font-size: 0.95rem; font-weight: bold;
+    border: 2px solid var(--gris-borde); background: transparent;
+    color: var(--texto); border-radius: 8px; cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-htab.activo { background: var(--texto); color: white; border-color: var(--texto); }
+
+.filtros-historial { margin-bottom: 16px; }
+
+.hist-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.stat-card {
+    flex: 1; min-width: 110px; background: white;
+    border: 2px solid var(--gris-borde); border-radius: 10px;
+    padding: 14px 8px; text-align: center;
+}
+.stat-card.stat-alerta { border-color: var(--rojo); background: #fdf2f2; }
+.stat-emoji  { font-size: 1.4rem; margin-bottom: 4px; }
+.stat-valor  { font-size: 1.5rem; font-weight: 900; color: var(--texto); }
+.stat-alerta .stat-valor { color: var(--rojo); }
+.stat-label  { font-size: 0.7rem; color: #7f8c8d; margin-top: 4px; line-height: 1.3; }
+
+.hist-info { font-size: 0.85rem; color: #7f8c8d; margin-bottom: 8px; font-weight: bold; }
+
+.tabla-wrapper {
+    overflow-x: auto; border: 2px solid var(--gris-borde);
+    border-radius: 8px; margin-bottom: 12px;
+}
+.hist-tabla { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 700px; }
+.hist-tabla th {
+    background: var(--texto); color: white; padding: 8px 6px;
+    text-align: center; font-size: 0.72rem; white-space: nowrap; position: sticky; top: 0;
+}
+.hist-tabla td {
+    padding: 6px 5px; border-bottom: 1px solid var(--gris-borde);
+    text-align: center; vertical-align: middle; white-space: nowrap;
+}
+.hist-tabla td.td-left { text-align: left; white-space: normal; max-width: 150px; font-size: 0.72rem; }
+.hist-tabla tr:nth-child(even) td { background: #f9f9f9; }
+.hist-tabla tr:hover td { background: #eaf4ff; }
+.td-alerta { background: #fdf2f2 !important; color: var(--rojo) !important; font-weight: bold; }
+
+.btn-eliminar {
+    background: var(--rojo); color: white; border: none;
+    padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+}
+.btn-eliminar:hover { opacity: 0.8; }
+
+.hist-paginacion {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-top: 8px; padding-bottom: 10px;
+}
+.btn-pag {
+    padding: 8px 16px; border: 2px solid var(--texto); background: white;
+    border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; color: var(--texto);
+}
+.btn-pag:disabled { opacity: 0.35; cursor: not-allowed; }
+#hist-paginfo { font-size: 0.85rem; font-weight: bold; color: var(--texto); }
+
 /* --- BOTONES EXPORTAR / IMPORTAR --- */
 .btn-exportar { background-color: #16a085; }
 .btn-importar {

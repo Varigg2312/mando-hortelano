@@ -125,5 +125,16 @@ const HortelanoDB = (() => {
         };
     }
 
-    return { insertar, obtenerUltimos, obtenerPorRango, existeHoy, exportarTodo, importarDesdeJSON, T_HIGIENE, T_TRAZA };
+    // --- Elimina un registro por id ---
+    async function eliminar(tabla, id) {
+        const bd = await abrir();
+        return new Promise((resolve, reject) => {
+            const tx  = bd.transaction(tabla, 'readwrite');
+            const req = tx.objectStore(tabla).delete(id);
+            req.onsuccess = () => resolve({ ok: true });
+            req.onerror   = () => reject(new Error(`Error al eliminar de ${tabla}: ${req.error?.message}`));
+        });
+    }
+
+    return { insertar, obtenerUltimos, obtenerPorRango, existeHoy, exportarTodo, importarDesdeJSON, eliminar, T_HIGIENE, T_TRAZA };
 })();

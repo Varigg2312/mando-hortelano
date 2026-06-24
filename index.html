@@ -39,6 +39,7 @@
         <nav class="navegacion-tactica">
             <button id="tab-higiene"        class="btn-tab activo">Control de Higiene</button>
             <button id="tab-trazabilidad"   class="btn-tab">Trazabilidad Total</button>
+            <button id="tab-historial"      class="btn-tab">📋 Historial</button>
         </nav>
 
         <!-- BADGE: ESTADO DE REGISTRO HOY -->
@@ -253,6 +254,37 @@
                 </fieldset>
                 <button type="submit" class="btn-inmenso btn-accion">SELLAR LOTE COMPLETO</button>
             </form>
+        </div>
+
+        <!-- ================================ -->
+        <!-- VISTA: HISTORIAL                 -->
+        <!-- ================================ -->
+        <div id="vista-historial" class="oculto">
+            <div class="nav-historial">
+                <button id="htab-higiene" class="btn-htab activo">🧼 Higiene</button>
+                <button id="htab-traza"   class="btn-htab">📦 Trazabilidad</button>
+            </div>
+            <div class="filtros-historial">
+                <div class="fila-agrupada">
+                    <div class="grupo-control"><label for="hist-desde">Desde:</label><input type="date" id="hist-desde"></div>
+                    <div class="grupo-control"><label for="hist-hasta">Hasta:</label><input type="date" id="hist-hasta"></div>
+                    <button id="btn-hist-filtrar" class="btn-inmenso btn-accion" style="align-self:flex-end;padding:12px;">🔍 Filtrar</button>
+                    <button id="btn-hist-limpiar" class="btn-inmenso" style="align-self:flex-end;padding:12px;background:#95a5a6;">✕ Todo</button>
+                </div>
+            </div>
+            <div id="hist-stats" class="hist-stats"></div>
+            <div id="hist-info"  class="hist-info"></div>
+            <div class="tabla-wrapper">
+                <table id="hist-tabla" class="hist-tabla">
+                    <thead id="hist-thead"></thead>
+                    <tbody id="hist-tbody"></tbody>
+                </table>
+            </div>
+            <div class="hist-paginacion">
+                <button id="hist-prev" class="btn-pag">← Anterior</button>
+                <span   id="hist-paginfo"></span>
+                <button id="hist-next" class="btn-pag">Siguiente →</button>
+            </div>
         </div>
 
         <hr class="divisor">
