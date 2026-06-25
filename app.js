@@ -1,7 +1,7 @@
 // ==========================================================================
 // CONFIGURACIÓN
 // ==========================================================================
-const PIN_ACCESO    = '1234';
+const PIN_ACCESO    = '2818';
 const CAMPOS_MEMORIA = ['lote-vinagre', 'lote-sal', 'lote-ajo', 'lote-aceite', 'lote-limon', 'lote-pimiento', 'lote-envase', 'cliente-destino'];
 
 // Estado del Historial
